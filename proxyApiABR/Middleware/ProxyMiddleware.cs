@@ -20,7 +20,7 @@ namespace proxyApiABR.Middleware
 
         public async Task Invoke(HttpContext context)
         {
-            if (FindByQuery(context.Request.QueryString.Value) != null) {
+            if (await FindByQuery(context.Request.QueryString.Value) != null) {
                 //одинаковые запросы не должны отправляться в гугл
                 context.Response.StatusCode = StatusCodes.Status200OK;
                 //вытащить с монго по query, сериализовать в модель и в reponse.body
@@ -40,8 +40,8 @@ namespace proxyApiABR.Middleware
 
             await _requestDelegate(context);
         }
-        private GoogleModel FindByQuery(string query) { 
-           return _mongo.GetByQueryAsync(query).GetAwaiter().GetResult();
+        private async Task<GoogleModel> FindByQuery(string query) { 
+           return await _mongo.GetByQueryAsync(query);
         }
         private async Task SaveToMongo(Stream body) {
 
@@ -104,6 +104,11 @@ namespace proxyApiABR.Middleware
             return new HttpMethod(method);
         }
         private Uri BuildGoogleUri( HttpRequest request) {
+
+            if (request.Path.StartsWithSegments("какой то сегмент")) {
+            // строить другой uri
+            } 
+
             return new Uri("https://google.com/search?" + request.Path.Value);
         }
     }
