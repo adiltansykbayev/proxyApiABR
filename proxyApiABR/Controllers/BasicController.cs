@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 
 namespace proxyApiABR.Controllers
 {
@@ -9,6 +9,7 @@ namespace proxyApiABR.Controllers
         [HttpPost(Name = "Search")]
         public List<GoogleModel> Post(string value)
         {
+            //TODO: использование HttpClient c Web Proxy
             var list = new List<GoogleModel>();
 
             return list;

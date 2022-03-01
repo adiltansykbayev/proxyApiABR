@@ -6,7 +6,8 @@ namespace proxyApiABR.Services
     public class MongoCrudService
     {
         private readonly IMongoCollection<GoogleModel> _collection;
-
+        private object _locker = new object();
+        private static SemaphoreSlim semaphore;
         public MongoCrudService(
             IOptions<DatabaseSettings> mongoDatabaseSettings)
         {
@@ -31,10 +32,32 @@ namespace proxyApiABR.Services
         public async Task CreateAsync(GoogleModel newItem) =>
             await _collection.InsertOneAsync(newItem);
 
-        public async Task UpdateAsync(string id, GoogleModel item) =>
-            await _collection.ReplaceOneAsync(x => x.Id == id, item);
+        public async Task UpdateAsync(string id, GoogleModel item) {
+            semaphore = new SemaphoreSlim(0, 3);
+            semaphore.Wait();
+            //Monitor.Enter(_locker);
+            try 
+            {
+                await _collection.ReplaceOneAsync(x => x.Id == id, item);
+            }
+            finally {
+                semaphore.Release();
+                //Monitor.Exit(_locker);
+            }
+        }
+           
 
-        public async Task RemoveAsync(string id) =>
-            await _collection.DeleteOneAsync(x => x.Id == id);
+        public async Task RemoveAsync(string id)
+        {
+            Monitor.Enter(_locker);
+            try
+            {
+                await _collection.DeleteOneAsync(x => x.Id == id);
+            }
+            finally
+            {
+                Monitor.Exit(_locker);
+            }
+        }
     }
 }
